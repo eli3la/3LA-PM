@@ -123,8 +123,16 @@ function PM({people,setPeople}){const[show,setShow]=useState(false);const[nn,set
 }
 
 // MAIN APP
+// localStorage helpers
+const LS_DATA="3la_data";const LS_PEOPLE="3la_people";
+const load=(key,fallback)=>{try{const v=localStorage.getItem(key);return v?JSON.parse(v):fallback}catch(e){return fallback}};
+const save=(key,val)=>{try{localStorage.setItem(key,JSON.stringify(val))}catch(e){}};
+
 export default function App(){
-  const[data,setData]=useState(INIT);const[people,setPeople]=useState(PEOPLE);const[view,setView]=useState("status");const[detail,setDetail]=useState(null);const[showAdd,setShowAdd]=useState(false);const[af,setAf]=useState({text:"",catId:"",projId:"",spId:"",priority:"medium",due:"2026-03-01",tags:[]});
+  const[data,setData]=useState(()=>load(LS_DATA,INIT));const[people,setPeople]=useState(()=>load(LS_PEOPLE,PEOPLE));const[view,setView]=useState("status");const[detail,setDetail]=useState(null);const[showAdd,setShowAdd]=useState(false);const[af,setAf]=useState({text:"",catId:"",projId:"",spId:"",priority:"medium",due:"2026-03-01",tags:[]});
+  // Auto-save on changes
+  React.useEffect(()=>save(LS_DATA,data),[data]);
+  React.useEffect(()=>save(LS_PEOPLE,people),[people]);
   const tog=useCallback((ci,pi,si,ti)=>setData(d=>d.map(c=>c.id!==ci?c:{...c,projects:c.projects.map(p=>p.id!==pi?p:{...p,subprojects:p.subprojects.map(s=>s.id!==si?s:{...s,tasks:s.tasks.map(t=>t.id!==ti?t:{...t,done:!t.done})})})})),[]);
   const uSt=useCallback((ci,pi,st)=>setData(d=>d.map(c=>c.id!==ci?c:{...c,projects:c.projects.map(p=>p.id!==pi?p:{...p,status:st})})),[]);
   const dT=(ci,pi,si,ti)=>setData(d=>d.map(c=>c.id!==ci?c:{...c,projects:c.projects.map(p=>p.id!==pi?p:{...p,subprojects:p.subprojects.map(s=>s.id!==si?s:{...s,tasks:s.tasks.filter(t=>t.id!==ti)})})}));
@@ -281,6 +289,7 @@ export default function App(){
         <div><div style={{fontSize:18,fontWeight:700,letterSpacing:-.5}}><span style={{color:"#e94560"}}>3LA</span> <span style={{color:"#555",fontWeight:400}}>PM</span></div><div style={{fontSize:10,color:"#444",marginTop:1}}>Week of Feb 23, 2026</div></div>
         <div style={{display:"flex",gap:10,alignItems:"center"}}>
           <PM people={people} setPeople={setPeople}/>
+          <Bt sx={{padding:"4px 8px",fontSize:9}} onClick={()=>{if(confirm("Reset all data to defaults? This cannot be undone.")){setData(INIT);setPeople(PEOPLE)}}}>↺ Reset</Bt>
           <div style={{display:"flex",gap:14,alignItems:"center"}}><div style={{textAlign:"center"}}><div style={{fontSize:18,fontWeight:700,color:urg>0?"#f5a623":"#0f9b8e"}}>{urg}</div><div style={{fontSize:8,color:"#555",letterSpacing:1.2,fontWeight:600}}>URGENT</div></div><div style={{width:1,height:24,background:css.bdr}}/><div style={{textAlign:"center"}}><div style={{fontSize:18,fontWeight:700}}>{dn}<span style={{color:"#444",fontWeight:400}}>/{tot}</span></div><div style={{fontSize:8,color:"#555",letterSpacing:1.2,fontWeight:600}}>TASKS</div></div></div></div></div>
       <div style={{display:"flex"}}>
         {VW.map(v=><div key={v.k} onClick={()=>{setView(v.k);setDetail(null)}} style={{padding:"7px 14px",cursor:"pointer",fontSize:11.5,fontWeight:view===v.k&&!detail?650:400,color:view===v.k&&!detail?"#e8e8ef":"#555",borderBottom:view===v.k&&!detail?"2px solid #e94560":"2px solid transparent",display:"flex",alignItems:"center",gap:4}}><span style={{fontSize:11}}>{v.i}</span> {v.l}</div>)}
